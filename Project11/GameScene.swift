@@ -15,6 +15,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
             scoreLabel.text = "Score: \(score)"
         }
     }
+    var editLabel: SKLabelNode!
+    var editingMode: Bool = false {
+        didSet {
+            editLabel.text = editingMode ? "Done" : "Edit"
+        }
+    }
     
     override func didMove(to view: SKView) {
         let background = SKSpriteNode(imageNamed: "background")
@@ -31,6 +37,12 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
         scoreLabel.position = CGPoint(x: 980, y: 700)
         
         addChild(scoreLabel)
+        
+        editLabel = SKLabelNode(fontNamed: "Chalkduster")
+        editLabel.text = "Edit"
+        editLabel.position = CGPoint(x: 80, y: 700)
+        
+        addChild(editLabel)
         
         physicsBody = SKPhysicsBody(edgeLoopFrom: frame)
         physicsWorld.contactDelegate = self
@@ -50,16 +62,35 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let touch = touches.first else { return }
         let location = touch.location(in: self)
+        let objects = nodes(at: location)
         
-        let ball = SKSpriteNode(imageNamed: "ballRed")
-        
-        ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width / 2.0)
-        ball.physicsBody!.restitution = 0.4
-        ball.physicsBody?.contactTestBitMask = ball.physicsBody?.collisionBitMask ?? 0
-        ball.position = location
-        ball.name = "ball"
-        
-        addChild(ball)
+        if objects.contains(editLabel) {
+            editingMode.toggle()
+        } else {
+            if editingMode {
+                // create a box
+                
+                let size = CGSize(width: Int.random(in: 16...128), height: 16)
+                let box = SKSpriteNode(color: UIColor(red: CGFloat.random(in: 0...1), green: CGFloat.random(in: 0...1), blue: CGFloat.random(in: 0...1), alpha: 1), size: size)
+                
+                box.zRotation = CGFloat.random(in: 0...3)
+                box.position = location
+                box.physicsBody = SKPhysicsBody(rectangleOf: box.size)
+                box.physicsBody?.isDynamic = false
+                
+                addChild(box)
+            } else {
+                let ball = SKSpriteNode(imageNamed: "ballRed")
+                
+                ball.physicsBody = SKPhysicsBody(circleOfRadius: ball.size.width / 2.0)
+                ball.physicsBody!.restitution = 0.4
+                ball.physicsBody?.contactTestBitMask = ball.physicsBody?.collisionBitMask ?? 0
+                ball.position = location
+                ball.name = "ball"
+                
+                addChild(ball)
+            }
+        }
     }
     
     func makeBouncer(at position: CGPoint) {
